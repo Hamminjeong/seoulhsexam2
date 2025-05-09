@@ -2,74 +2,96 @@ import streamlit as st
 import plotly.express as px
 import pandas as pd
 
-st.title("2025학년도 학생 성적 반별 분포표")
+st.title("2025-1 중간고사 성적 시각화 (공통수학1)")
 
 st.markdown("""
-이 앱은 업무시스템에서 다운로드한 **지필평가 성적표**와 **1학년 명렬표**를 이용해 반별 성적 분포도를 제공합니다.
-\n[성적 엑셀 파일] 받는 법: 나이스-지필평가조회-교과목별일람표조회-전체학급 
-\n -한페이지출력에 체크, 엑셀파일 저장. 이때 일부 열을 삭제하여, 각 반이 하나의 열만 차지하도록 해주세요. (서울고 기준 F,K,M,P,U 열 삭제)
-\n[명렬표 엑셀 파일]은 2행에 반, A열에 번, B6칸에 1반 1번 학생이 위치하게 해주세요.
+이 앱은 업무시스템에서 다운로드한 **지필평가 성적표**와 **1학년 명렬표**를 이용해
+학생 개별 점수를 시각화해 줍니다. 각 점 위에 마우스를 올리면
+`[반 번호 번 이름]` 형식으로 학생 정보를 확인할 수 있습니다.
 
 **사용 방법:**
+
 1. 성적 엑셀 파일 (.xlsx)을 업로드하세요.
 2. 명렬표 엑셀 파일 (.xlsx)을 업로드하세요.
-3. 시각화 결과를 확인하세요! 마우스 커서를 올리면 학생명을 확인할 수 있습니다.
+3. 시각화 결과를 확인하세요!
+   """)
+
+score\_file = st.file\_uploader("📄 성적 엑셀 파일 업로드", type=\["xlsx"], key="score")
+name\_file = st.file\_uploader("📄 1학년 명렬표 업로드", type=\["xlsx"], key="name")
+
+class\_col\_map = {
+1: 2,  2: 3,  3: 4,  4: 6,
+5: 7,  6: 8,  7: 9,  8: 11,
+9: 13, 10: 15, 11: 16, 12: 17,
+13: 18, 14: 19
+}
+
+if score\_file and name\_file:
+score\_df = pd.read\_excel(score\_file, header=None)
+name\_df = pd.read\_excel(name\_file, sheet\_name='학년별명렬')
+name\_data = name\_df.iloc\[4:, 1:15].reset\_index(drop=True)
+
+```
+combined_data = []
+
+for class_num, col_idx in class_col_map.items():
+    scores = score_df.iloc[7:34, col_idx]
+    for i, val in enumerate(scores):
+        student_no = i + 1
+        try:
+            score = float(val)
+            student_name = name_data.iloc[i, class_num - 1]
+            label = f"[{class_num}반 {student_no}번 {student_name}]"
+            combined_data.append({
+                "Class": class_num,
+                "StudentNo": student_no,
+                "Score": score,
+                "Label": label
+            })
+        except:
+            continue
+
+df = pd.DataFrame(combined_data)
+
+# 산점도
+fig = px.scatter(
+    df,
+    x="Score",
+    y="Class",
+    hover_name="Label",
+    color=df["Class"].astype(str),
+    color_discrete_sequence=px.colors.qualitative.Pastel,
+    title="2025-1 Midterm: Mathematics1",
+    labels={"Score": "Score", "Class": "Class"}
+)
+fig.update_yaxes(autorange="reversed")
+st.plotly_chart(fig)
+
+# 상자그림
+fig_box = px.box(
+    df,
+    x="Class",
+    y="Score",
+    points="all",
+    hover_name="Label",
+    color=df["Class"].astype(str),
+    color_discrete_sequence=px.colors.qualitative.Pastel,
+    title="반별 점수 분포 (Box Plot)"
+)
+st.plotly_chart(fig_box)
+
+st.markdown("""
+**📊 상자그림(Box Plot)의 의미**
+
+- **중앙값(2사분위수)**: 상자의 가로줄 — 전체 점수 중간값
+- **1사분위수~3사분위수 (Q1~Q3)**: 상자의 아래쪽과 위쪽 — 점수의 중간 50% 범위
+- **수염(Whiskers)**: 일반적인 범위 내의 최소/최대값
+- **점으로 찍힌 값들**: 이상치(너무 높거나 낮은 특이 점수)
+
+이 그래프를 통해 각 반의 점수 분포가 **고르게 분포되어 있는지**, **극단적인 점수가 있는지**,
+**중간값이 높은 반은 어디인지** 등을 한눈에 비교할 수 있습니다.
 """)
-
-# 파일 업로드
-score_file = st.file_uploader("성적 엑셀 파일 (.xlsx)", type="xlsx", key="score")
-name_file = st.file_uploader("명렬표 엑셀 파일 (.xlsx)", type="xlsx", key="name")
-
-if score_file and name_file:
-    score_df = pd.read_excel(score_file, sheet_name=0)
-    name_df = pd.read_excel(name_file, sheet_name='학년별명렬')
-    name_data = name_df.iloc[4:, 1:15].reset_index(drop=True)
-
-    class_count = 14
-    plot_data = []
-
-    for class_idx in range(class_count):
-        class_num = class_idx + 1
-        col_index = 2 + class_idx  # C열부터
-        scores = score_df.iloc[7:34, col_index]
-
-        for row_offset, score in enumerate(scores):
-            student_number = row_offset + 1
-            try:
-                score = float(score)
-                student_name = name_data.iloc[row_offset, class_idx]
-                label = f"[{class_num}반 {student_number}번 {student_name}]"
-                plot_data.append({
-                    "Class": class_num,
-                    "StudentNo": student_number,
-                    "Score": score,
-                    "Label": label
-                })
-            except:
-                continue
-
-    df = pd.DataFrame(plot_data)
-
-    fig = px.scatter(
-        df,
-        x="Score",
-        y="Class",
-        hover_name="Label",
-        title="2025-1 Midterm: Mathematics1",
-        labels={"Score": "Score", "Class": "Class"}
-    )
-    fig.update_yaxes(autorange="reversed")
-    st.plotly_chart(fig)
-    
-    fig_box = px.box(
-        df,
-        x="Class",
-        y="Score",
-        points="all",
-        hover_name="Label",
-        title="반별 점수 분포 (Box Plot)"
-    )
-    st.plotly_chart(fig_box)
+```
 
 else:
-    st.info("두 개의 엑셀 파일을 모두 업로드해 주세요.")
+st.info("두 개의 엑셀 파일을 모두 업로드해 주세요.")
