@@ -2,12 +2,12 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-st.title("2025-1 Midterm: 성적 시각화 (이름 포함)")
+st.title("2025-1 중간고사 성적 시각화 (학생 이름 포함)")
 
 score_file = st.file_uploader("📄 성적 엑셀 파일 업로드", type=["xlsx"], key="score")
 name_file = st.file_uploader("📄 1학년 명렬표 업로드", type=["xlsx"], key="name")
 
-# 반별 실제 열 인덱스 (0-based)
+# 반별 성적 열 인덱스 (엑셀 기준, 0부터 시작)
 class_col_map = {
     1: 2,  2: 3,  3: 4,  4: 6,
     5: 7,  6: 8,  7: 9,  8: 11,
@@ -23,12 +23,13 @@ if score_file and name_file:
     combined_data = []
 
     for class_num, col_idx in class_col_map.items():
-        scores = score_df.iloc[7:34, col_idx]
-        for row_offset, val in enumerate(scores):
-            student_no = row_offset + 1
+        # 번호가 아닌 실제 점수가 들어간 열만 가져옴
+        scores = score_df.iloc[7:34, col_idx]  # 27명
+        for i, val in enumerate(scores):
+            student_no = i + 1
             try:
                 score = float(val)
-                student_name = name_data.iloc[row_offset, class_num - 1]
+                student_name = name_data.iloc[i, class_num - 1]
                 label = f"[{class_num}반 {student_no}번 {student_name}]"
                 combined_data.append({
                     "Class": class_num,
@@ -51,6 +52,5 @@ if score_file and name_file:
     )
     fig.update_yaxes(autorange="reversed")
     st.plotly_chart(fig)
-
 else:
-    st.info("위의 두 개 엑셀 파일을 모두 업로드해 주세요.")
+    st.info("두 개의 엑셀 파일을 모두 업로드해 주세요.")
