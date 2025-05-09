@@ -31,7 +31,7 @@ if score_file and name_file:
 
     for class_idx in range(class_count):
         class_num = class_idx + 1
-        col_index = 2 + class_idx  # C열부터
+        col_index = 2 + class_idx  # C열부터 시작
         scores = score_df.iloc[7:34, col_index]
 
         for row_offset, score in enumerate(scores):
@@ -51,6 +51,7 @@ if score_file and name_file:
 
     df = pd.DataFrame(plot_data)
 
+    # 반별 파스텔톤 색상 정의
     pastel_colors = {
         1: '#AEC6CF', 2: '#FFB347', 3: '#77DD77',
         4: '#CBAACB', 5: '#FFD1DC', 6: '#FFFACD',
@@ -58,13 +59,12 @@ if score_file and name_file:
         10: '#E0BBE4', 11: '#FFDAC1', 12: '#C1E1C1',
         13: '#B5EAD7', 14: '#FF9AA2'
     }
-
     df["Color"] = df["Class"].map(pastel_colors)
 
-    # Figure 생성
+    # 그래프 생성
     fig = go.Figure()
 
-    # ① 산점도 trace 추가
+    # 산점도 추가
     fig.add_trace(go.Scatter(
         x=df["Score"],
         y=df["Class"],
@@ -75,21 +75,23 @@ if score_file and name_file:
         name="학생 점수"
     ))
 
-    # ② 상자그림 trace 추가
+    # 상자그림 추가
     for c in sorted(df["Class"].unique()):
         class_df = df[df["Class"] == c]
-        fig.add_trace(go.Box(
-            y=[c] * len(class_df),
-            x=class_df["Score"],
-            name=f"{c}반",
-            marker_color=pastel_colors[c],
-            boxpoints='outliers',
-            opacity=0.3,
-            line=dict(width=1),
-            showlegend=False
-        ))
+        if len(class_df) >= 3:  # boxplot은 최소 3명 필요
+            fig.add_trace(go.Box(
+                y=[c] * len(class_df),
+                x=class_df["Score"],
+                name=f"{c}반",
+                marker_color=pastel_colors[c],
+                boxpoints='outliers',
+                opacity=0.3,
+                line=dict(width=1),
+                showlegend=False,
+                orientation='h'
+            ))
 
-    # ③ 흐린 회색 가로선 (y축 눈금선 설정)
+    # 레이아웃 조정 (흐린 가로선 포함)
     fig.update_yaxes(
         tickmode="linear",
         dtick=1,
@@ -97,12 +99,10 @@ if score_file and name_file:
         gridcolor="lightgray",
         gridwidth=0.5
     )
-
-    # 전체 layout
     fig.update_layout(
-        title="2025-1 Midterm: Mathematics1 - 산점도 + 상자그림",
-        xaxis_title="Score",
-        yaxis_title="Class",
+        title="2025-1학기 수학 중간고사: 산점도 + 반별 상자그림",
+        xaxis_title="점수",
+        yaxis_title="반",
         height=700
     )
 
