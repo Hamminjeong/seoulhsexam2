@@ -12,7 +12,7 @@ if score_file and name_file:
 
     # 데이터 로드
     def load_data(score_file, name_file):
-        score_df = pd.read_excel(score_file, sheet_name=0, header=5)
+        score_df = pd.read_excel(score_file, sheet_name=0, header=5).iloc[:33]  # 6행부터 시작이므로 39행까지는 index 33까지
         name_df = pd.read_excel(name_file, sheet_name=0, header=4)
         return score_df, name_df
 
