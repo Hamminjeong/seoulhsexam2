@@ -60,5 +60,16 @@ if score_file and name_file:
     )
     fig.update_yaxes(autorange="reversed")
     st.plotly_chart(fig)
+    
+    fig_box = px.box(
+        df,
+        x="Class",
+        y="Score",
+        points="all",
+        hover_name="Label",
+        title="반별 점수 분포 (Box Plot)"
+    )
+    st.plotly_chart(fig_box)
+
 else:
     st.info("두 개의 엑셀 파일을 모두 업로드해 주세요.")
