@@ -1,5 +1,6 @@
 import streamlit as st
 import plotly.express as px
+import plotly.graph_objects as go
 import pandas as pd
 
 st.title("2025학년도 학생 성적 반별 분포표")
@@ -50,26 +51,62 @@ if score_file and name_file:
 
     df = pd.DataFrame(plot_data)
 
-    fig = px.scatter(
-        df,
-        x="Score",
-        y="Class",
-        hover_name="Label",
-        title="2025-1 Midterm: Mathematics1",
-        labels={"Score": "Score", "Class": "Class"}
+    pastel_colors = {
+        1: '#AEC6CF', 2: '#FFB347', 3: '#77DD77',
+        4: '#CBAACB', 5: '#FFD1DC', 6: '#FFFACD',
+        7: '#B0E0E6', 8: '#F5DEB3', 9: '#D8BFD8',
+        10: '#E0BBE4', 11: '#FFDAC1', 12: '#C1E1C1',
+        13: '#B5EAD7', 14: '#FF9AA2'
+    }
+
+    df["Color"] = df["Class"].map(pastel_colors)
+
+    # Figure 생성
+    fig = go.Figure()
+
+    # ① 산점도 trace 추가
+    fig.add_trace(go.Scatter(
+        x=df["Score"],
+        y=df["Class"],
+        mode="markers",
+        marker=dict(color=df["Color"], size=10, opacity=0.7),
+        text=df["Label"],
+        hoverinfo="text",
+        name="학생 점수"
+    ))
+
+    # ② 상자그림 trace 추가
+    for c in sorted(df["Class"].unique()):
+        class_df = df[df["Class"] == c]
+        fig.add_trace(go.Box(
+            y=[c] * len(class_df),
+            x=class_df["Score"],
+            name=f"{c}반",
+            marker_color=pastel_colors[c],
+            boxpoints='outliers',
+            opacity=0.3,
+            line=dict(width=1),
+            showlegend=False
+        ))
+
+    # ③ 흐린 회색 가로선 (y축 눈금선 설정)
+    fig.update_yaxes(
+        tickmode="linear",
+        dtick=1,
+        autorange="reversed",
+        gridcolor="lightgray",
+        gridwidth=0.5
     )
-    fig.update_yaxes(autorange="reversed")
+
+    # 전체 layout
+    fig.update_layout(
+        title="2025-1 Midterm: Mathematics1 - 산점도 + 상자그림",
+        xaxis_title="Score",
+        yaxis_title="Class",
+        height=700
+    )
+
     st.plotly_chart(fig)
-    
-    fig_box = px.box(
-        df,
-        x="Class",
-        y="Score",
-        points="all",
-        hover_name="Label",
-        title="반별 점수 분포 (Box Plot)"
-    )
-    st.plotly_chart(fig_box)
 
 else:
     st.info("두 개의 엑셀 파일을 모두 업로드해 주세요.")
