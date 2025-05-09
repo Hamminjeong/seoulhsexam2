@@ -2,35 +2,35 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-st.title("2025-1 Midterm: 성적 시각화 (공통수학1)")
+st.title("2025-1 Midterm: 성적 시각화 (이름 포함)")
 
-uploaded_file = st.file_uploader("📄 업무시스템 엑셀 파일 업로드", type=["xlsx"])
+score_file = st.file_uploader("📄 성적 엑셀 파일 업로드", type=["xlsx"], key="score")
+name_file = st.file_uploader("📄 1학년 명렬표 업로드", type=["xlsx"], key="name")
 
-# 병합 반 리스트 (2칸 차지하는 반 번호)
-merged_class_cols = {3: 3, 7: 8, 8: 10, 10: 12}  # 반: 사용 열 index (1부터 시작)
-# 일반 반: 1~14에서 제외된 것들
-normal_class_cols = {c: 2 + (c - 1) for c in range(1, 15) if c not in merged_class_cols}
+# 반별 실제 열 인덱스 (0-based)
+class_col_map = {
+    1: 2,  2: 3,  3: 4,  4: 6,
+    5: 7,  6: 8,  7: 9,  8: 11,
+    9: 13, 10: 15, 11: 16, 12: 17,
+    13: 18, 14: 19
+}
 
-# 병합 반은 가운데 열만 선택
-merged_class_cols.update({k: v for k, v in merged_class_cols.items()})
+if score_file and name_file:
+    score_df = pd.read_excel(score_file, header=None)
+    name_df = pd.read_excel(name_file, sheet_name='학년별명렬')
+    name_data = name_df.iloc[4:, 1:15].reset_index(drop=True)
 
-if uploaded_file:
-    df = pd.read_excel(uploaded_file, header=None)
-    score_data = []
+    combined_data = []
 
-    for class_num in range(1, 15):
-        if class_num in merged_class_cols:
-            col_idx = merged_class_cols[class_num]
-        else:
-            col_idx = normal_class_cols[class_num]
-
-        scores = df.iloc[7:34, col_idx]  # 27명 (C8:C34)
+    for class_num, col_idx in class_col_map.items():
+        scores = score_df.iloc[7:34, col_idx]
         for row_offset, val in enumerate(scores):
             student_no = row_offset + 1
             try:
                 score = float(val)
-                label = f"[{class_num}반 {student_no}번]"
-                score_data.append({
+                student_name = name_data.iloc[row_offset, class_num - 1]
+                label = f"[{class_num}반 {student_no}번 {student_name}]"
+                combined_data.append({
                     "Class": class_num,
                     "StudentNo": student_no,
                     "Score": score,
@@ -39,15 +39,18 @@ if uploaded_file:
             except:
                 continue
 
-    result_df = pd.DataFrame(score_data)
+    df = pd.DataFrame(combined_data)
 
     fig = px.scatter(
-        result_df,
+        df,
         x="Score",
         y="Class",
         hover_name="Label",
-        title="2025-1 Midterm: Mathematics1",
+        title="2025-1 Midterm: Mathematics1 (with Names)",
         labels={"Score": "Score", "Class": "Class"}
     )
     fig.update_yaxes(autorange="reversed")
     st.plotly_chart(fig)
+
+else:
+    st.info("위의 두 개 엑셀 파일을 모두 업로드해 주세요.")
