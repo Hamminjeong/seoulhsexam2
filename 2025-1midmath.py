@@ -2,6 +2,19 @@ import streamlit as st
 import plotly.express as px
 import pandas as pd
 
+st.title("2025-1 중간고사 성적 시각화 (공통수학1)")
+
+st.markdown("""
+이 앱은 업무시스템에서 다운로드한 **지필평가 성적표**와 **1학년 명렬표**를 이용해
+학생 개별 점수를 시각화해 줍니다. 각 점 위에 마우스를 올리면
+`[반 번호 번 이름]` 형식으로 학생 정보를 확인할 수 있습니다.
+
+**사용 방법:**
+1. 성적 엑셀 파일 (.xlsx)을 업로드하세요.
+2. 명렬표 엑셀 파일 (.xlsx)을 업로드하세요.
+3. 시각화 결과를 확인하세요!
+""")
+
 # 파일 업로드
 score_file = st.file_uploader("성적 엑셀 파일 (.xlsx)", type="xlsx", key="score")
 name_file = st.file_uploader("명렬표 엑셀 파일 (.xlsx)", type="xlsx", key="name")
