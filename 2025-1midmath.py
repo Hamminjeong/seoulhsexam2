@@ -2,55 +2,65 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-st.title("2025-1 중간고사 성적 시각화 (학생 이름 포함)")
+# 엑셀 파일 경로
+score_file = "지필평가 교과목별 일람표_2025 1학기 중간고사 공통수학1.xlsx"
+name_file = "1학년 명렬.xlsx"
 
-score_file = st.file_uploader("📄 성적 엑셀 파일 업로드", type=["xlsx"], key="score")
-name_file = st.file_uploader("📄 1학년 명렬표 업로드", type=["xlsx"], key="name")
+# 데이터 로드
+def load_data():
+    score_df = pd.read_excel(score_file, sheet_name=0, header=5)
+    name_df = pd.read_excel(name_file, sheet_name=0, header=4)
+    return score_df, name_df
 
-# 반별 성적 열 인덱스 (엑셀 기준, 0부터 시작)
-class_col_map = {
-    1: 2,  2: 3,  3: 4,  4: 6,
-    5: 7,  6: 8,  7: 9,  8: 11,
-    9: 13, 10: 15, 11: 16, 12: 17,
-    13: 18, 14: 19
-}
+# 점수 및 이름 매칭 처리
+def prepare_data(score_df, name_df):
+    data = []
+    for class_num in range(1, 15):
+        score_col = score_df.columns[class_num + 1]  # C열부터 시작
+        scores = score_df[score_col].dropna().tolist()
+        try:
+            names = name_df.iloc[:, class_num - 1].dropna().tolist()
+        except:
+            names = ["이름없음"] * len(scores)
 
-if score_file and name_file:
-    score_df = pd.read_excel(score_file, header=None)
-    name_df = pd.read_excel(name_file, sheet_name='학년별명렬')
-    name_data = name_df.iloc[4:, 1:15].reset_index(drop=True)
+        for idx, score in enumerate(scores):
+            student_number = idx + 1
+            if idx < len(names):
+                name = names[idx]
+            else:
+                name = "이름없음"
+            data.append({
+                "반": f"{class_num}반",
+                "점수": score,
+                "설명": f"{class_num}반 {student_number}번 {name}"
+            })
+    return pd.DataFrame(data)
 
-    combined_data = []
+# Streamlit 앱
+def main():
+    st.title("1학년 반별 점수 분포 시각화")
 
-    for class_num, col_idx in class_col_map.items():
-        # 번호가 아닌 실제 점수가 들어간 열만 가져옴
-        scores = score_df.iloc[7:34, col_idx]  # 27명
-        for i, val in enumerate(scores):
-            student_no = i + 1
-            try:
-                score = float(val)
-                student_name = name_data.iloc[i, class_num - 1]
-                label = f"[{class_num}반 {student_no}번 {student_name}]"
-                combined_data.append({
-                    "Class": class_num,
-                    "StudentNo": student_no,
-                    "Score": score,
-                    "Label": label
-                })
-            except:
-                continue
+    score_df, name_df = load_data()
+    plot_df = prepare_data(score_df, name_df)
 
-    df = pd.DataFrame(combined_data)
-
-    fig = px.scatter(
-        df,
-        x="Score",
-        y="Class",
-        hover_name="Label",
-        title="2025-1 Midterm: Mathematics1 (with Names)",
-        labels={"Score": "Score", "Class": "Class"}
+    fig = px.strip(
+        plot_df,
+        x="점수",
+        y="반",
+        hover_name="설명",
+        orientation="h",
+        stripmode="overlay",
+        height=700
     )
-    fig.update_yaxes(autorange="reversed")
+
+    fig.update_traces(jitter=0.3, marker_size=8)
+    fig.update_layout(
+        xaxis_title="점수",
+        yaxis_title="반",
+        title="반별 점수 분포 (마우스를 올리면 학생 정보 표시)",
+    )
+
     st.plotly_chart(fig)
-else:
-    st.info("두 개의 엑셀 파일을 모두 업로드해 주세요.")
+
+if __name__ == "__main__":
+    main()
