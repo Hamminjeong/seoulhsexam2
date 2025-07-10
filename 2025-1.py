@@ -5,15 +5,15 @@ import plotly.express as px
 
 st.set_page_config(layout="wide")
 
+# 엑셀 파일 경로
 GRADE_FILE_PATH = "data/지필평가 교과목별 일람표_2025 1학기 공통수학1.xlsx"
 NAME_FILE_PATH = "data/1학년 명렬.xlsx"
-
 
 # 엑셀 파일 로드
 @st.cache_data
 def load_excel_data():
-    xls_grade = pd.ExcelFile(GRADE_FILE_PATH) 
-    xls_name = pd.ExcelFile(NAME_FILE_PATH)   
+    xls_grade = pd.ExcelFile(GRADE_FILE_PATH)
+    xls_name = pd.ExcelFile(NAME_FILE_PATH)
 
     df_midterm = xls_grade.parse("중간고사", header=None)
     df_final = xls_grade.parse("기말고사", header=None)
@@ -22,7 +22,7 @@ def load_excel_data():
 
 df_midterm, df_final, df_names = load_excel_data()
 
-# 이름 매칭용 dict 생성
+# 이름 매핑 딕셔너리 생성
 def build_name_map(df):
     name_map = {}
     for row in df.itertuples(index=False):
