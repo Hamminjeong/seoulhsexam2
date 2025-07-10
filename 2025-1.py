@@ -5,8 +5,7 @@ import plotly.express as px
 
 st.set_page_config(layout="wide")
 
-# GitHub의 엑셀 파일 경로 (사용자에 맞게 수정하세요)
-GITHUB_BASE_URL = "https://raw.githubusercontent.com/Hamminjeong/seoulhsexam2/edit/main/"
+GITHUB_BASE_URL = "https://raw.githubusercontent.com/Hamminjeong/seoulhsexam2/main/"
 GRADE_FILE_URL = GITHUB_BASE_URL + "지필평가 교과목별 일람표_2025 1학기 공통수학1.xlsx"
 NAME_FILE_URL = GITHUB_BASE_URL + "1학년 명렬.xlsx"
 
