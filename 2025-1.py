@@ -12,8 +12,8 @@ NAME_FILE_PATH = "data/1학년 명렬.xlsx"
 # 엑셀 파일 로드
 @st.cache_data
 def load_excel_data():
-    xls_grade = pd.ExcelFile(GRADE_FILE_URL)
-    xls_name = pd.ExcelFile(NAME_FILE_URL)
+    xls_grade = pd.ExcelFile(GRADE_FILE_PATH) 
+    xls_name = pd.ExcelFile(NAME_FILE_PATH)   
 
     df_midterm = xls_grade.parse("중간고사", header=None)
     df_final = xls_grade.parse("기말고사", header=None)
